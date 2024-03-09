@@ -3,23 +3,33 @@ import OpenAI from "openai";
 
 // Function to parse the response string
 function parseResponse(responseString) {
-    const [fullCodeSection, componentsSection] = responseString.split('Code components:');
-    const fullCode = fullCodeSection.replace('Full code:\n\n', '').trim();
-    
-    const componentsArray = componentsSection.split(/\d+\./).slice(1);
-    const components = componentsArray.reduce((acc, componentString) => {
-        const [nameLine, ...rest] = componentString.split('\n').map(line => line.trim()).filter(line => line);
-        const name = nameLine.replace('Name:', '').trim();
-        const descriptionIndex = rest.findIndex(line => line.startsWith('Description:'));
-        const description = rest[descriptionIndex].replace('Description:', '').trim();
-        const code = rest.slice(descriptionIndex + 1).join('\n').replace('Code:', '').trim();
-        
-        acc[name] = { description, code };
-        return acc;
-    }, {});
+  // Split the response string into sections
+  const sections = responseString.split('Code components:');
+  const fullCodeSection = sections[0];
+  const componentsSection = sections.length > 1 ? sections[1] : '';
 
-    return { fullCode, components };
+  // Check and process the full code section
+  const fullCode = fullCodeSection ? fullCodeSection.replace('Full code:\n\n', '').trim() : 'No Full Code Provided';
+
+  // Process the components section if available
+  const componentsArray = componentsSection ? componentsSection.split(/\d+\./).slice(1) : [];
+  const components = componentsArray.reduce((acc, componentString) => {
+      const lines = componentString.split('\n').map(line => line.trim()).filter(line => line);
+      if (lines.length > 0) {
+          const nameLine = lines[0];
+          const name = nameLine.replace('Name:', '').trim();
+          const descriptionIndex = lines.findIndex(line => line.startsWith('Description:'));
+          const description = descriptionIndex !== -1 ? lines[descriptionIndex].replace('Description:', '').trim() : 'No Description Provided';
+          const code = lines.slice(descriptionIndex + 1).join('\n').replace('Code:', '').trim();
+
+          acc[name] = { description, code };
+      }
+      return acc;
+  }, {});
+
+  return { fullCode, components };
 }
+
 export default async function handler(req, res) {
     console.log('Received body:', req.body); // Check the incoming request body
 
@@ -75,6 +85,7 @@ export default async function handler(req, res) {
         }
 
         const responseData = parseResponse(assistantResponse);
+        console.log(responseData,'rdata');
         // Send the assistant's message content back as the response
         return res.status(200).json(responseData);
 

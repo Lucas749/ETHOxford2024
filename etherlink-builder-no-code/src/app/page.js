@@ -1,24 +1,32 @@
 'use client'
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useAccount, useConnect, useDisconnect } from 'wagmi';
+import { useWalletClient, useSendTransaction, useAccount } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import '@rainbow-me/rainbowkit/styles.css';
+import { AppBar, Toolbar, Typography, Button, TextField, Container, Box, Card, CardContent, Snackbar } from '@mui/material';
+import { ethers } from 'ethers';
+// const { ethers } = require("ethers");
 
 export default function Home() {
     const { data: account } = useAccount();
-    const { connect, connectors, error, isLoading } = useConnect();
-    const { disconnect } = useDisconnect();
-
     const [input, setInput] = useState('');
     const [response, setResponse] = useState({ fullCode: '', components: {} });
+    const [compilationResult, setCompilationResult] = useState(null);
+    const [openSnackbar, setOpenSnackbar] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
+    const [provider, setProvider] = useState(null);
 
+    useEffect(() => {
+        // Make sure ethers and window.ethereum are defined
+        if (typeof ethers !== 'undefined' && window.ethereum) {
+            console.log(window.ethereum, 'w eth');
+            setProvider(new ethers.BrowserProvider(window.ethereum));
+        }
+    }, []);
     const handleInputChange = (e) => setInput(e.target.value);
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            // Ensure the endpoint matches your environment setup; this is for localhost development.
             const res = await axios.post('/api/chat', { message: input });
             console.log(res.data);
             setResponse(res.data);
@@ -27,61 +35,158 @@ export default function Home() {
         }
     };
 
+    const handleCompile = async () => {
+        if (!response.fullCode) {
+            console.error('No code to compile');
+            return;
+        }
+        try {
+            // This assumes you have an API endpoint set up for compilation
+            const res = await axios.post('/api/compiler', { source: response.fullCode });
+            setCompilationResult(res.data);
+        } catch (error) {
+            console.error('Error compiling code:', error.response?.data || error.message);
+            setCompilationResult(null);
+        }
+    };
+
+    const handleDeploy = async () => {
+        if (!compilationResult?.bytecode) {
+            setSnackbarMessage('No bytecode to deploy.');
+            setOpenSnackbar(true);
+            return;
+        }
+
+        // if (!provider) {
+        //     setSnackbarMessage('No Ethereum provider found. Please install MetaMask.');
+        //     setOpenSnackbar(true);
+        //     return;
+        // }
+
+        try {
+            // const { sendTransaction } = useSendTransaction()
+            // sendTransaction({
+            //     value: 0,
+            //     data: "0x" + compilationResult.bytecode,
+            //   })
+            const signer = await provider.getSigner();
+            console.log(signer,'siger');
+            const factory = new ethers.ContractFactory([], compilationResult.bytecode, signer);
+            console.log(factory,'factory');
+
+            const contract = await factory.deploy();
+            console.log(contract,'contract');
+
+                    // Wait for the contract to be mined
+            const deploymentReceipt = await contract.deploymentTransaction().wait(2);
+            
+            console.log(deploymentReceipt);
+            setSnackbarMessage(`Contract deployed successfully! Address: ${contract.address}`);
+        } catch (error) {
+            console.error('Deployment error:', error);
+            setSnackbarMessage('Contract deployment failed.');
+        }
+
+        setOpenSnackbar(true);
+    };
+
+    const handleCloseSnackbar = () => {
+        setOpenSnackbar(false);
+    };
+
     return (
-        <div>
-            <div>
-                <h2>Account</h2>
-                <div>
-                    status: {account?.status}
-                    <br />
-                    address: {account?.address}
-                    <br />
-                    chainId: {account?.chainId}
-                </div>
-                <ConnectButton />
-            </div>
+        <Box sx={{ flexGrow: 1 }}>
+            <AppBar position="static">
+                <Toolbar>
+                    <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                        Etherlink Builder
+                    </Typography>
+                    <ConnectButton />
+                </Toolbar>
+            </AppBar>
 
-            {account?.address && (
-                <button type="button" onClick={() => disconnect()}>
-                    Disconnect
-                </button>
-            )}
+            <Container maxWidth="sm" style={{ marginTop: '2rem' }}>
+                <Typography variant="h4" gutterBottom align="center">
+                    What do you want to build on Etherlink?
+                </Typography>
+                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+                    <TextField
+                        fullWidth
+                        variant="outlined"
+                        label="Enter your idea"
+                        value={input}
+                        onChange={handleInputChange}
+                    />
+                    <Button variant="contained" color="primary" type="submit">
+                        Submit
+                    </Button>
+                </form>
+            </Container>
 
-            <div>
-                <h2>Connect</h2>
-                {connectors.map((connector) => (
-                    <button key={connector.id} onClick={() => connect(connector)} disabled={!connector.ready}>
-                        {connector.name}
-                        {!connector.ready && ' (unsupported)'}
-                        {isLoading && connector.id === connector?.id && '…'}
-                    </button>
-                ))}
-                {error && <div>{error.message}</div>}
-            </div>
-
-            <h1>What do you want to build on Etherlink?</h1>
-            <form onSubmit={handleSubmit}>
-                <input type="text" value={input} onChange={handleInputChange} placeholder="Enter your idea" />
-                <button type="submit">Submit</button>
-            </form>
             {response.fullCode && (
-                <div>
-                    <h2>Full Code:</h2>
-                    <pre>{response.fullCode}</pre>
-                </div>
+                <Container maxWidth="md" style={{ marginTop: '2rem' }}>
+                    <Card>
+                        <CardContent>
+                            <Typography variant="h5" gutterBottom>
+                                Full Code:
+                            </Typography>
+                            <pre>{response.fullCode}</pre>
+                            <Button variant="contained" onClick={handleCompile} style={{ marginTop: '10px' }}>
+                                Compile Code
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </Container>
             )}
+
+            {compilationResult && (
+                <Container maxWidth="md" style={{ marginTop: '2rem' }}>
+                    <Card>
+                        <CardContent>
+                            <Typography variant="h5">Compilation Result:</Typography>
+                            <Typography component="div">Bytecode: <pre>{compilationResult.bytecode}</pre></Typography>
+                            <Typography component="div">ABI: <pre>{JSON.stringify(compilationResult.abi, null, 2)}</pre></Typography>
+                        </CardContent>
+                    </Card>
+                </Container>
+            )}
+                        {compilationResult && (
+                <Button variant="contained" onClick={handleDeploy} style={{ margin: '20px' }}>
+                    Deploy Contract
+                </Button>
+            )}
+
+            <Snackbar
+                open={openSnackbar}
+                autoHideDuration={6000}
+                onClose={handleCloseSnackbar}
+                message={snackbarMessage}
+                action={
+                    <Button color="secondary" size="small" onClick={handleCloseSnackbar}>
+                        Close
+                    </Button>
+                }
+            />
             {Object.keys(response.components).length > 0 && (
-                <div>
-                    <h2>Code Components:</h2>
+                <Container maxWidth="md" style={{ marginTop: '2rem' }}>
+                    <Typography variant="h5" gutterBottom>
+                        Code Components:
+                    </Typography>
                     {Object.entries(response.components).map(([name, { description, code }], index) => (
-                        <div key={index}>
-                            <h3>{name}</h3>
-                            <p>Description: {description}</p>
-                            <pre>Code: {code}</pre>
-                        </div>
+                        <Card key={index} style={{ marginBottom: '1rem' }}>
+                            <CardContent>
+                                <Typography variant="h6">{name}</Typography>
+                                <Typography color="textSecondary" gutterBottom>
+                                    Description: {description}
+                                </Typography>
+                                <Typography component="pre" style={{ overflowX: 'auto' }}>
+                                    Code: {code}
+                                </Typography>
+                            </CardContent>
+                        </Card>
                     ))}
-                </div>
+                </Container>
             )}
-        </div>
+        </Box>
     );
 }

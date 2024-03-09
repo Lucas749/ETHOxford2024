@@ -39,14 +39,15 @@ export default async function handler(req, res) {
     
     //Adjust the message
     // Prepend the context to the user's input
-    const prompt = `You are a solidity co-pilot for Tezos new EVM compatible L2 Etherlink. You are part of a no code solutions that let's users specify the functionality of a smart contract and you return the code written in best practice and explained in detail. The code should be clustered into the main components with the parameters clearly displayed.
-    
+    const prompt = `You are a solidity co-pilot for Tezos new EVM compatible L2 Etherlink. You are part of a no code solutions that let's users specify the functionality of a smart contract and you return the code written in best practice and explained in detail. The code should be clustered into the main components with the parameters clearly displayed. The main components can consists of individual functions or multiple functions together.
+    Name the contract always CustomContract so that it can be compiled in solidity with this identifier. Start the code with the license // SPDX-License-Identifier: MIT
+
     Return it in this format only
 
     Full code:
 
     Code components:
-    1. Name
+    1. Name 
     Description:
     Code:
         
@@ -58,7 +59,6 @@ export default async function handler(req, res) {
     try {
         
       const API_KEY = process.env.OPENAI_API_KEY;
-      console.log(API_KEY,'APIKEY');
       // Initialize the OpenAI client with your API key
       const openai = new OpenAI({apiKey: API_KEY});
 

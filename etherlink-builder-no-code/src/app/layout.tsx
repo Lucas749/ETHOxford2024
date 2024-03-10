@@ -37,7 +37,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <Head>
         <title>EtherlinkGPT</title>
         <meta name="description" content="No Code Building on Etherlink" />
-        <link rel="icon" href="/favicon.ico" /> 
+        <link rel="icon" href="favicon.ico" /> 
       </Head>
       <html lang="en">
         <body className={inter.className}>

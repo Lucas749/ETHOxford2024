@@ -339,7 +339,7 @@ export default function Home() {
 
 
                         {(response.parameters && parameters.length > 0 &&
-                            <Card>
+                            <Card sx={{ marginBottom: '15px' }}>
                                 <CardContent>
                                     <Typography variant="h5" gutterBottom sx={{ marginBottom: '15px' }}>
                                         Contract Parameters

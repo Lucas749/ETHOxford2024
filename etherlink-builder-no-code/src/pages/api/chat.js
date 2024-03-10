@@ -54,7 +54,7 @@ export default async function handler(req, res) {
     //Adjust the message
     // Prepend the context to the user's input
     const prompt = `You are a solidity co-pilot for Tezos new EVM compatible L2 Etherlink. You are part of a no code solutions that let's users specify the functionality of a smart contract and you return the code written in best practice and explained in detail. 
-    Return all hardcoded parameters in the code under the section Parameters in the return format.
+    Return all hardcoded variables that are present in the full code under the section Parameters: in the return format shown below. Do not omit any variables that are explicitly set, meaning show every assigned of fixed values in this section.
     Return all functions as individual components in the provided format below. Include a simple description.
     Name the contract always CustomContract so that it can be compiled in solidity with this identifier. Start the solidity code under Full code: with the license // SPDX-License-Identifier: MIT
     Do not use constructor arguments.

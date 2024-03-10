@@ -19,7 +19,6 @@
       console.log(contractAddress);
       console.log(sourceCode);
       
-      // contractAddress = '0x653574192c664674c671ebd20ee8ecded1b5ddf1';
       
       
       const verificationBody = {

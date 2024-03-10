@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useWalletClient, useSendTransaction, useAccount } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { CssBaseline, createTheme, ThemeProvider, Grid, AppBar, Toolbar, Typography, Button, TextField, Container, Box, Card, CardContent, Snackbar, IconButton, Tooltip } from '@mui/material';
+import { Modal, CssBaseline, createTheme, ThemeProvider, Grid, AppBar, Toolbar, Typography, Button, TextField, Container, Box, Card, CardContent, Snackbar, IconButton, Tooltip } from '@mui/material';
 import { ethers } from 'ethers';
 import InfoIcon from '@mui/icons-material/Info';
 import Typist from 'react-typist';
@@ -54,6 +54,7 @@ export default function Home() {
     const { data: account } = useAccount();
     const [input, setInput] = useState('');
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [openCodeModal, setOpenCodeModal] = useState(false);
 
     const [response, setResponse] = useState({ fullCode: '', components: {} });
     const [compilationResult, setCompilationResult] = useState(null);
@@ -288,53 +289,136 @@ export default function Home() {
 
                 {/* <Grid container spacing={1}> */}
                 <Grid item xs={12} md={6}>
-                    <Container maxWidth="sm" style={{ marginTop: '2rem', color: 'white' }}>
-                        <Typography variant="h4" gutterBottom align="center" style={{ color: 'white' }}>
-                            <TypingEffect />
+                    <Container maxWidth="lg" style={{ marginTop: '2rem', color: 'white' }}>
+                        {isSubmitted ? (
 
-                        </Typography>
+                            <Card sx={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'center', padding: '3px', marginBottom: '10px' }}>
+                                <CardContent style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'center', width: '100%', padding: '8px' }}>
+                                    <Typography variant="h5" style={{ color: 'white' }}>Another idea? 🧠</Typography>
+                                    <TextField
+                                        variant="outlined"
+                                        label=""
+                                        value={input}
+                                        onChange={handleInputChange}
+                                        style={{ flexGrow: 1 }}
+                                    />
+                                    <Button variant="contained" color="primary" onClick={handleSubmit}>
+                                        Submit
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        ) : (
+                            <>
+                                <Typography variant="h4" gutterBottom align="center" style={{ color: 'white' }}>
+                                    <TypingEffect />
+                                </Typography>
+                                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+                                    <TextField
+                                        fullWidth
+                                        variant="outlined"
+                                        label="Enter your idea"
+                                        value={input}
+                                        onChange={handleInputChange}
+                                    />
+                                    <Button variant="contained" color="primary" type="submit">
+                                        Submit
+                                    </Button>
+                                </form>
+                            </>
+                        )}
 
-                        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
-                            <TextField
-                                fullWidth
-                                variant="outlined"
-                                label="Enter your idea"
-                                value={input}
-                                onChange={handleInputChange}
-                            />
-                            <Button variant="contained" color="primary" type="submit">
-                                Submit
-                            </Button>
-                        </form>
 
                         {(response.parameters && parameters.length > 0 &&
-                            <Box sx={{ margin: '20px' }}>
-                                <Card>
-                                    <CardContent>
-                                        <Typography variant="h5" gutterBottom>
-                                            Parameters:
-                                        </Typography>
-                                        {parameters.map((param, index) => (
-                                            <Box key={index} sx={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
-                                                <TextField
-                                                    label={param.name}
-                                                    variant="outlined"
-                                                    value={param.value}
-                                                    onChange={(e) => handleChange(index, e.target.value)}
-                                                    sx={{ marginRight: '10px' }}
-                                                />
+                            <Card>
+                                <CardContent>
+                                    <Typography variant="h5" gutterBottom sx={{ marginBottom: '15px' }}>
+                                        Contract Parameters
+                                    </Typography>
+                                    <Typography variant="body1" gutterBottom sx={{ marginBottom: '15px' }}>
+                                        Easy adjust your contract parameters below with the help of EtherlinkGPT. No coding skills required.
+                                    </Typography>
+                                    {parameters.map((param, index) => (
+                                        <Card key={index} sx={{ marginBottom: '10px', display: 'flex', alignItems: 'center', padding: '10px', bgcolor: '#2e2b2b' }}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+                                                <Typography sx={{ minWidth: '100px', marginRight: '10px' }}>{param.name}</Typography> {/* Ensure all parameter names have the same width */}
                                                 <Tooltip title={param.description}>
+
                                                     <IconButton>
                                                         <InfoIcon />
                                                     </IconButton>
                                                 </Tooltip>
+
+                                                <TextField
+                                                    label=""
+                                                    variant="outlined"
+                                                    fullWidth
+                                                    value={param.value}
+                                                    onChange={(e) => handleChange(index, e.target.value)}
+                                                    sx={{ marginRight: '10px' }}
+                                                />
+
                                             </Box>
-                                        ))}
-                                    </CardContent>
-                                </Card>
-                            </Box>
+                                        </Card>
+                                    ))}
+
+                                    <Button
+                                        variant="contained"
+                                        color="secondary"
+                                        onClick={() => setOpenCodeModal(true)}
+                                        sx={{ mt: 2 }}
+                                    >
+                                        Show Solidity Code
+                                    </Button>
+
+                                    <Button variant="contained" onClick={handleCompile} style={{ marginTop: '10px' }}>
+                                        Compile Code
+                                    </Button>
+
+                                    <Button variant="contained" onClick={handleDeploy} style={{ marginTop: '10px' }}>
+                                        Deploy Contract
+                                    </Button>
+                                    <Button variant="contained" onClick={handleVerifyContract} style={{ margin: '20px' }}>
+                                        Verify Contract
+                                    </Button>
+                                </CardContent>
+                            </Card>
 
                         )}
+
+                        <Modal
+                            open={openCodeModal}
+                            onClose={() => setOpenCodeModal(false)}
+                            aria-labelledby="show-solidity-code-modal"
+                            aria-describedby="modal-modal-description"
+                            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        >
+                            <Box sx={{
+                                position: 'absolute',
+                                width: '80%',
+                                maxHeight: '90vh',
+                                overflowY: 'auto',
+                                bgcolor: 'background.paper',
+                                boxShadow: 24,
+                                p: 4,
+                                '& pre': {
+                                    padding: '16px',
+                                    backgroundColor: '#f5f5f5',
+                                    borderRadius: '5px',
+                                    color: '#333',
+                                    fontFamily: '"Fira code", "Fira Mono", monospace',
+                                    fontSize: '0.875rem',
+                                }
+                            }}>
+                                <Typography id="modal-modal-title" variant="h6" component="h2">
+                                    Solidity Code
+                                </Typography>
+                                <Typography id="modal-modal-description" sx={{ mt: 2 }}>
+                                    <pre>{response.fullCode}</pre>
+                                </Typography>
+                            </Box>
+                        </Modal>
+
+
                         {response.fullCode && (
                             <>
                                 <Card>

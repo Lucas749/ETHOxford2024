@@ -23,10 +23,10 @@ export default async function handler(req, res) {
     }   
     // source = source.replace('// SPDX-License-Identifier: MIT\n','');
     // console.log(solc —version, '')
-    source = source.replace("```","").replace(/```/g, '');;
+    source = source.replace("```","").replace(/```/g, '');
     console.log(source,'source');
 
-    // Prepare compiler inputs
+    // Prepare compiler input
     const compiler = await loadCompiler('v0.8.24+commit.e11b9ed9'); // Specify the version
 
     const input = {

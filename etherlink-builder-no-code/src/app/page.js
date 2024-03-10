@@ -3,11 +3,17 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useWalletClient, useSendTransaction, useAccount } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { Modal, CssBaseline, createTheme, ThemeProvider, Grid, AppBar, Toolbar, Typography, Button, TextField, Container, Box, Card, CardContent, Snackbar, IconButton, Tooltip } from '@mui/material';
+import { Accordion, AccordionSummary, AccordionDetails, Modal, CssBaseline, createTheme, ThemeProvider, Grid, AppBar, Toolbar, Typography, Button, TextField, Container, Box, Card, CardContent, Snackbar, IconButton, Tooltip } from '@mui/material';
 import { ethers } from 'ethers';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import InfoIcon from '@mui/icons-material/Info';
-import Typist from 'react-typist';
-// import Logo from '../public/logo.png'; 
+import { Light as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs'; // You can choose another style
+// import hljs from 'highlight.js';
+// import 'highlight.js/styles/default.css'; // Choose a style you like
+// import solidity from 'highlightjs-solidity';
+
+// solidity(hljs);
 import './globals.css';
 
 function TypingEffect() {
@@ -65,6 +71,10 @@ export default function Home() {
     const [parameters, setParameters] = useState([]);
 
     const [provider, setProvider] = useState(null);
+
+    // useEffect(() => {
+    //     hljs.highlightAll(); // Highlight all code elements on the page
+    // }, [openCodeModal, response.fullCode]); // Rerun highlighting when modal opens or code changes
 
     useEffect(() => {
         // Make sure ethers and window.ethereum are defined
@@ -361,25 +371,27 @@ export default function Home() {
                                         </Card>
                                     ))}
 
-                                    <Button
-                                        variant="contained"
-                                        color="secondary"
-                                        onClick={() => setOpenCodeModal(true)}
-                                        sx={{ mt: 2 }}
-                                    >
-                                        Show Solidity Code
-                                    </Button>
+<Box sx={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '20px' }}>
+    <Button
+        variant="contained"
+        color="secondary"
+        onClick={() => setOpenCodeModal(true)}
+    >
+        Show Solidity Code
+    </Button>
 
-                                    <Button variant="contained" onClick={handleCompile} style={{ marginTop: '10px' }}>
-                                        Compile Code
-                                    </Button>
+    <Button variant="contained" onClick={handleCompile}>
+        Compile Code
+    </Button>
 
-                                    <Button variant="contained" onClick={handleDeploy} style={{ marginTop: '10px' }}>
-                                        Deploy Contract
-                                    </Button>
-                                    <Button variant="contained" onClick={handleVerifyContract} style={{ margin: '20px' }}>
-                                        Verify Contract
-                                    </Button>
+    <Button variant="contained" onClick={handleDeploy}>
+        Deploy Contract
+    </Button>
+
+    <Button variant="contained" onClick={handleVerifyContract}>
+        Verify Contract
+    </Button>
+</Box>
                                 </CardContent>
                             </Card>
 
@@ -412,14 +424,25 @@ export default function Home() {
                                 <Typography id="modal-modal-title" variant="h6" component="h2">
                                     Solidity Code
                                 </Typography>
-                                <Typography id="modal-modal-description" sx={{ mt: 2 }}>
-                                    <pre>{response.fullCode}</pre>
-                                </Typography>
+                                <SyntaxHighlighter language="solidity" style={docco}>
+                                    {response.fullCode.replace("```", "").replace(/```/g, '')
+                                    }
+                                </SyntaxHighlighter>
                             </Box>
                         </Modal>
+                        {/* <Typography id="modal-title" variant="h6" component="h2" gutterBottom>
+                            Solidity Code
+                            </Typography>
+                            <pre>
+                            <code className="language-solidity">
+                                {response.fullCode.replace(/```/g, '')}
+                            </code>
+                            </pre>
+                        </Box>
+                        </Modal> */}
 
-
-                        {response.fullCode && (
+                        {/* To show always full code and compilation results */}
+                        {/* {response.fullCode && (
                             <>
                                 <Card>
                                     <CardContent>
@@ -449,9 +472,9 @@ export default function Home() {
                                     </Card>
                                 )}
                             </>
-                        )}
+                        )} */}
 
-                        {Object.keys(response.components).length > 0 && (
+                        {/* {Object.keys(response.components).length > 0 && (
                             <Typography variant="h5" gutterBottom>
                                 Code Components:
                             </Typography>
@@ -470,6 +493,52 @@ export default function Home() {
                                 </CardContent>
                             </Card>
                         ))}
+
+                        
+                        */}
+
+{Object.keys(response.components).length > 0 && (
+                    <>
+                            <Card>
+                                <CardContent>
+                                    <Typography variant="h5" gutterBottom sx={{ marginBottom:   '15px',marginBottom: '15px' }}>
+                                        Components
+                                    </Typography>
+                                    <Typography variant="body1" gutterBottom sx={{ marginBottom: '15px' }}>
+                                        Easily learn Solidity on the go with EtherlinkGPT. Analyse individual components of the smart contract and see the underlying code.
+                                    </Typography>
+                        {Object.entries(response.components).map(([name, { description, code }], index) => (
+                            <Accordion key={index} sx={{ marginBottom: '10px', bgcolor: '#2e2b2b' }}>
+                                <AccordionSummary
+                                    expandIcon={<ExpandMoreIcon />}
+                                    aria-controls={`panel${index}a-content`}
+                                    id={`panel${index}a-header`}
+                                >
+                                    <Typography variant="h6" sx={{ fontWeight: 'bold' }}>{name}</Typography>
+                                </AccordionSummary>
+                                <AccordionDetails>
+                                    <Typography gutterBottom>
+                                        {description}
+                                    </Typography>
+                                    <Box sx={{
+                                        maxHeight: '200px', // Adjust based on your preference
+                                        overflow: 'auto',
+                                        marginTop: '10px',
+                                        color: 'black',
+                                        backgroundColor: '#f5f5f5', // Light background for the code area
+                                        padding: '10px',
+                                        borderRadius: '4px',
+                                        fontFamily: '"Fira Code", "Fira Mono", monospace',
+                                    }}>
+                                        <pre>{code}</pre>
+                                    </Box>
+                                </AccordionDetails>
+                            </Accordion>
+                        ))}
+                        </CardContent>
+                        </Card>
+                    </>
+                )}
                     </Container>
                 </Grid>
 

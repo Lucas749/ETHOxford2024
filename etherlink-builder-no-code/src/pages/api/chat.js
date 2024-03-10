@@ -22,7 +22,7 @@ function parseResponse(responseString) {
   if (fullCodeSection.includes('Full code:')) {
     fullCode = fullCodeSection.split('Full code:')[1].trim();
   }
-  fullCode = fullCode.replace('solidity', ''); // If you meant to remove the word "solidity" from the code.
+  fullCode = fullCode.replace(/```solidity/g, ''); // If you meant to remove the word "solidity" from the code.
   
   parameters = parameters ? parameters.replace('Parameters:\n\n', '').trim() : 'No Parameters Provided';
   // Process the components section if available
@@ -53,10 +53,12 @@ export default async function handler(req, res) {
     
     //Adjust the message
     // Prepend the context to the user's input
-    const prompt = `You are a solidity co-pilot for Tezos new EVM compatible L2 Etherlink. You are part of a no code solutions that let's users specify the functionality of a smart contract and you return the code written in best practice and explained in detail. The code should be clustered into the main components with the parameters clearly displayed. The components can consists of individual functions or multiple functions together.
-    Include at least 2 components. Return all hardcoded parameters in the code under the section Parameters in the return format.
+    const prompt = `You are a solidity co-pilot for Tezos new EVM compatible L2 Etherlink. You are part of a no code solutions that let's users specify the functionality of a smart contract and you return the code written in best practice and explained in detail. 
+    Return all hardcoded parameters in the code under the section Parameters in the return format.
+    Return all functions as individual components in the provided format below. Include a simple description.
     Name the contract always CustomContract so that it can be compiled in solidity with this identifier. Start the solidity code under Full code: with the license // SPDX-License-Identifier: MIT
     Do not use constructor arguments.
+    
     Return it in this format only. Always include Full Code:, Parameters: and Code components:
 
     ----- Return format --------

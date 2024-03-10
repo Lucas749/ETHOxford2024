@@ -4,13 +4,27 @@ import OpenAI from "openai";
 // Function to parse the response string
 function parseResponse(responseString) {
   // Split the response string into sections
-  const sections = responseString.split('Code components:');
+  // Initialize defaults
+  let fullCode = 'No Full Code Provided';
+  let parameters = '';
+  let componentsSection = '';
+
+  // Splitting the response string into major sections
+  const sections = responseString.includes('Parameters:') ? responseString.split('Parameters:') : [responseString];
   const fullCodeSection = sections[0];
-  const componentsSection = sections.length > 1 ? sections[1] : '';
+  if (sections.length > 1) {
+    const sections2 = sections[1].includes('Code components:') ? sections[1].split('Code components:') : [sections[1]];
+    parameters = sections2[0];
+    componentsSection = sections2.length > 1 ? sections2[1] : '';
+  }
 
-  // Check and process the full code section
-  const fullCode = fullCodeSection ? fullCodeSection.replace('Full code:\n\n', '').trim() : 'No Full Code Provided';
-
+  // Processing the Full code section
+  if (fullCodeSection.includes('Full code:')) {
+    fullCode = fullCodeSection.split('Full code:')[1].trim();
+  }
+  fullCode = fullCode.replace('solidity', ''); // If you meant to remove the word "solidity" from the code.
+  
+  parameters = parameters ? parameters.replace('Parameters:\n\n', '').trim() : 'No Parameters Provided';
   // Process the components section if available
   const componentsArray = componentsSection ? componentsSection.split(/\d+\./).slice(1) : [];
   const components = componentsArray.reduce((acc, componentString) => {
@@ -27,7 +41,7 @@ function parseResponse(responseString) {
       return acc;
   }, {});
 
-  return { fullCode, components };
+  return { fullCode, components, parameters };
 }
 
 export default async function handler(req, res) {
@@ -39,12 +53,18 @@ export default async function handler(req, res) {
     
     //Adjust the message
     // Prepend the context to the user's input
-    const prompt = `You are a solidity co-pilot for Tezos new EVM compatible L2 Etherlink. You are part of a no code solutions that let's users specify the functionality of a smart contract and you return the code written in best practice and explained in detail. The code should be clustered into the main components with the parameters clearly displayed. The main components can consists of individual functions or multiple functions together.
-    Name the contract always CustomContract so that it can be compiled in solidity with this identifier. Start the code with the license // SPDX-License-Identifier: MIT
+    const prompt = `You are a solidity co-pilot for Tezos new EVM compatible L2 Etherlink. You are part of a no code solutions that let's users specify the functionality of a smart contract and you return the code written in best practice and explained in detail. The code should be clustered into the main components with the parameters clearly displayed. The components can consists of individual functions or multiple functions together.
+    Include at least 2 components. Return all hardcoded parameters in the code under the section Parameters in the return format.
+    Name the contract always CustomContract so that it can be compiled in solidity with this identifier. Start the solidity code under Full code: with the license // SPDX-License-Identifier: MIT
+    Do not use constructor arguments.
+    Return it in this format only. Always include Full Code:, Parameters: and Code components:
 
-    Return it in this format only
-
+    ----- Return format --------
     Full code:
+    Complete solidity code that can directly be compiled
+
+    Parameters:
+    1. VariableName = Value|Description of variable
 
     Code components:
     1. Name 

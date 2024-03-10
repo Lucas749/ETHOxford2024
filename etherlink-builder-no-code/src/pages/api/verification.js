@@ -13,6 +13,8 @@
       if (pragmaIndex !== -1) {
         sourceCode = sourceCode.substring(pragmaIndex+1);
       }
+      sourceCode = sourceCode.replace("```","").replace(/```/g, '');;
+
 
       console.log(contractAddress);
       console.log(sourceCode);

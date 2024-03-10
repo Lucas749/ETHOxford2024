@@ -7,7 +7,7 @@ Besides producing a MVP smart contract, EtherlinkGPT allows users to customize i
 # Demo
 Demo available under https://etherlinkgpt-ruby.vercel.app/ 
 
-Demo video is uploaded [here](https://drive.google.com/file/d/1gPKbbJBt-dASVZRUvXk-SnJVF6Q6uevm/view?usp=sharing)
+Demo video is uploaded [here](https://drive.google.com/file/d/1ErTqMYKWpAWWjlUXBlGT11dmrpsO6PUj/view)
 
 # Etherlink Testnet Usage
 Test account and a few selected contracts below.

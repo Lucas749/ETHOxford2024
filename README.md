@@ -32,5 +32,7 @@ Test account: [0x36ec5Fe51F5f6e8c26F646041Ea23864ec50197c](https://testnet-explo
 
 # Installation
 git clone repo
+
 npm install
+
 npm run
